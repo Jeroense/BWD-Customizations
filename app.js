@@ -1,5 +1,7 @@
-var canvasWidth = 580;
-var canvasHeight = 646;
+var baseHeight = 0;
+var baseWidth = 0;
+var customHeight = 0;
+var customWidth = 0;
 
 function update(activeAnchor) {
     var group = activeAnchor.getParent();
@@ -44,7 +46,7 @@ function update(activeAnchor) {
 }
 
 function addAnchor(group, x, y, position) {
-    var stage = group.getStage();
+    // var stage = group.getStage();
     var layer = group.getLayer();
 
     var anchor = new Konva.Circle({
@@ -91,8 +93,8 @@ function addAnchor(group, x, y, position) {
 function drawImage(tshirtObj) {
     var stage = new Konva.Stage({
     container: "container",
-    width: canvasWidth,
-    height: canvasHeight
+    width: baseWidth,
+    height: baseHeight
     });
 
     // Create single layer for both images
@@ -100,20 +102,20 @@ function drawImage(tshirtObj) {
 
     var tShirtImage = new Konva.Image({
         image: tshirtObj,
-        width: 580,
-        height: 646,
+        width: baseWidth,
+        height: baseHeight,
         draggable: false
     });
 
     var printImage = new Konva.Image({
         image: printObj,
-        width: 200,
-        height: 139,
+        width: customWidth,
+        height: customHeight,
     });
 
     var printGroup = new Konva.Group({
-        x: 190,  // !!! manually set for center of base image. (needs to be calculated) 
-        y: 169,  // !!! manually set for 1 third from top of base image. (needs to be calculated)
+        x: (baseWidth - customWidth) / 2,  // center hoizontally
+        y: (baseHeight - customHeight) / 3,  // position at 1/3 from top
         draggable: true
     });
 
@@ -135,9 +137,9 @@ function drawImage(tshirtObj) {
     layer.add(printGroup);
     printGroup.add(printImage);
     addAnchor(printGroup, 0, 0, 'topLeft');
-    addAnchor(printGroup, 200, 0, 'topRight');
-    addAnchor(printGroup, 200, 139, 'bottomRight');
-    addAnchor(printGroup, 0, 139, 'bottomLeft');
+    addAnchor(printGroup, customWidth, 0, 'topRight');
+    addAnchor(printGroup, customWidth, customHeight, 'bottomRight');
+    addAnchor(printGroup, 0, customHeight, 'bottomLeft');
     stage.add(layer);
 }
 
@@ -145,11 +147,15 @@ function drawImage(tshirtObj) {
 var tshirtObj = new Image();
 tshirtObj.src = 'images/tshirt-white.png';
 tshirtObj.onload = function() {
+    baseHeight = this.height;
+    baseWidth = this.width;
     drawImage(this);
 };
 
 var printObj = new Image();
-printObj.src = 'images/print1.jpg';
+printObj.src = 'images/lips1.jpg';
 printObj.onload = function() {
+    customHeight = this.height;
+    customWidth = this.width;
     drawImage(this);
 };
