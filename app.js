@@ -90,7 +90,7 @@ function addAnchor(group, x, y, position) {
     group.add(anchor);
 }
 
-function drawImage(tshirtObj) {
+function drawImage(image) {
     var stage = new Konva.Stage({
     container: "container",
     width: baseWidth,
@@ -143,6 +143,7 @@ function drawImage(tshirtObj) {
     stage.add(layer);
 }
 
+
 // Create images
 var tshirtObj = new Image();
 tshirtObj.src = 'images/tshirt-white.png';
@@ -153,9 +154,14 @@ tshirtObj.onload = function() {
 };
 
 var printObj = new Image();
-printObj.src = 'images/lips1.jpg';
+printObj.src = 'images/lips.png';
 printObj.onload = function() {
     customHeight = this.height;
     customWidth = this.width;
+    if (customWidth > (baseWidth - 50)) {
+        var scale = customWidth / (baseWidth - 200);
+        customWidth = printObj.width / scale;
+        customHeight = printObj.height /scale;
+    }
     drawImage(this);
 };
