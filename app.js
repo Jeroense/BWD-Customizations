@@ -4,6 +4,9 @@ var customHeight = 0;
 var customWidth = 0;
 var ratio = 1;
 var fixedRatio = true;
+var stage;
+var posX;
+var posY;
 
 var scalingText = document.querySelector("#ratioText");
 document.querySelector('#ratio').addEventListener('click', function(){
@@ -16,9 +19,19 @@ document.querySelector('#ratio').addEventListener('click', function(){
     drawImage();
 });
 
+function getPrintPosition(group) {
+    posX = group.attrs.x;
+    posY = group.attrs.y;
+    var lines = stage.find('#topLine')[0];
+    if(((posX - (parseInt(Math.abs(customWidth)) / 2))) == (baseWidth / 2)) {
+        lines.attrs.stroke = 'blue';
+    } else {
+        lines.attrs.stroke = 'red';
+    }
+}
+
 function update(activeAnchor) {
     var group = activeAnchor.getParent();
-
     var topLeft = group.get('.topLeft')[0];
     var topRight = group.get('.topRight')[0];
     var bottomRight = group.get('.bottomRight')[0];
@@ -32,9 +45,6 @@ function update(activeAnchor) {
 
     var anchorX = activeAnchor.getX();
     var anchorY = activeAnchor.getY();
-
-    // var width = right.getX() - left.getX();
-    // var height = bottom.getY() - top.getY();
 
     // update anchor positions
     if(fixedRatio !== true) {
@@ -108,7 +118,6 @@ function update(activeAnchor) {
                 origin.setY(customHeight - (anchorX / ratio));
             break;
         }
-        
         image.position(origin.position());
 
         var width = right.getX() - left.getX();
@@ -122,7 +131,7 @@ function update(activeAnchor) {
 }
 
 function addAnchor(group, x, y, name) {
-    // var stage = group.getStage();
+    var stage = group.getStage();
     var layer = group.getLayer();
 
     var anchor = new Konva.Circle({
@@ -168,25 +177,11 @@ function addAnchor(group, x, y, name) {
     group.add(anchor);
 }
 
-function addLines(group, x, y, point1, point2, name) {
-    // var layer = group.getLayer();
-    var helpLine = new Konva.Line({
-        x: 50,
-        y: 250,
-        points: [300, 150],
-        name: name,
-        stroke: 'red',
-        tension: 1
-    });
-    // layer.Draw();
-    group.add(helpLine);
-}
-
 // Create an invisible help anchor when in 'Fixed Ratio' mode.
 // Position: rightBottom
 function addOrigin(group, x, y, name) {
-    // var stage = group.getStage();
-    // var layer = group.getLayer();
+    var stage = group.getStage();
+    var layer = group.getLayer();
 
     var anchor = new Konva.Circle({
         x: x,
@@ -199,8 +194,25 @@ function addOrigin(group, x, y, name) {
     group.add(anchor);
 }
 
+function addLines(group, x, y, name) {
+    // var layer = group.getLayer();
+    var helpLine = new Konva.Line({
+        x: x,
+        y: y,
+        points: [0, baseHeight, 0, 0],
+        name: name,
+        stroke: 'blue',
+        dash: [1,3],
+        strokeWidth: 1,
+        tension: 1,
+        id: name
+    });
+    // layer.Draw();
+    group.add(helpLine);
+}
+
 function drawImage() {
-    var stage = new Konva.Stage({
+    stage = new Konva.Stage({
     container: "container",
     width: baseWidth,
     height: baseHeight
@@ -213,7 +225,6 @@ function drawImage() {
         image: tshirtObj,
         width: baseWidth,
         height: baseHeight,
-        draggable: false
     });
 
     var printImage = new Konva.Image({
@@ -228,6 +239,12 @@ function drawImage() {
         draggable: true
     });
 
+    var baseGroup = new Konva.Group({
+        x: 0,  
+        y: 0,  
+        draggable: false
+    });
+
     // add cursor styling
     printImage.on('mouseover', function() {
         document.body.style.cursor = 'pointer';
@@ -236,12 +253,13 @@ function drawImage() {
         document.body.style.cursor = 'default';
     });
 
-    printImage.on('dragmove', function() {
-        update(this);
+    printGroup.on('dragmove', function() {
+        getPrintPosition(this);
     });
 
     // Show Images
-    layer.add(tShirtImage);
+    layer.add(baseGroup)
+    baseGroup.add(tShirtImage);
     layer.add(printGroup);
     printGroup.add(printImage);
     if(fixedRatio !== true){
@@ -255,8 +273,8 @@ function drawImage() {
         addAnchor(printGroup, customWidth / 2, 0, 'bottom');
         addAnchor(printGroup, customWidth, customHeight / 2, 'left');
         addOrigin(printGroup, customWidth, customHeight, 'origin');
-        addLines(printGroup, 10, 10, 25, 25, 'topLine');
     }
+    addLines(baseGroup, (baseWidth / 2), 0, 'topLine');
     stage.add(layer);
 }
 
