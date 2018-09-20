@@ -2,6 +2,19 @@ var baseHeight = 0;
 var baseWidth = 0;
 var customHeight = 0;
 var customWidth = 0;
+var ratio = 1;
+var fixedRatio = true;
+
+var scalingText = document.querySelector("#ratioText");
+document.querySelector('#ratio').addEventListener('click', function(){
+    fixedRatio = !fixedRatio;
+    if(fixedRatio === true) {
+        scalingText.innerHTML = "Fixed Ratio";
+    } else {
+        scalingText.innerHTML = "Free Form";
+    }
+    drawImage();
+});
 
 function update(activeAnchor) {
     var group = activeAnchor.getParent();
@@ -10,42 +23,105 @@ function update(activeAnchor) {
     var topRight = group.get('.topRight')[0];
     var bottomRight = group.get('.bottomRight')[0];
     var bottomLeft = group.get('.bottomLeft')[0];
+    var top = group.get('.top')[0];
+    var right = group.get('.right')[0];
+    var bottom = group.get('.bottom')[0];
+    var left = group.get('.left')[0];
     var image = group.get('Image')[0];
+    var origin = group.get('.origin')[0];
 
     var anchorX = activeAnchor.getX();
     var anchorY = activeAnchor.getY();
 
+    // var width = right.getX() - left.getX();
+    // var height = bottom.getY() - top.getY();
+
     // update anchor positions
-    switch (activeAnchor.getName()) {
-        case 'topLeft':
-            topRight.setY(anchorY);
-            bottomLeft.setX(anchorX);
+    if(fixedRatio !== true) {
+        switch (activeAnchor.getName()) {
+            case 'topLeft':
+                topRight.setY(anchorY);
+                bottomLeft.setX(anchorX);
             break;
-        case 'topRight':
-            topLeft.setY(anchorY);
-            bottomRight.setX(anchorX);
+            case 'topRight':
+                topLeft.setY(anchorY);
+                bottomRight.setX(anchorX);
             break;
-        case 'bottomRight':
-            bottomLeft.setY(anchorY);
-            topRight.setX(anchorX);
+            case 'bottomRight':
+                bottomLeft.setY(anchorY);
+                topRight.setX(anchorX);
             break;
-        case 'bottomLeft':
-            bottomRight.setY(anchorY);
-            topLeft.setX(anchorX);
+            case 'bottomLeft':
+                bottomRight.setY(anchorY);
+                topLeft.setX(anchorX);
             break;
-    }
+        }
+        image.position(topLeft.position());
 
-    image.position(topLeft.position());
+        var width = topRight.getX() - topLeft.getX();
+        var height = bottomLeft.getY() - topLeft.getY();
 
-    var width = topRight.getX() - topLeft.getX();
-    var height = bottomLeft.getY() - topLeft.getY();
-    if(width && height) {
-        image.width(width);
-        image.height(height);
+        if(width && height) {
+            image.width(width);
+            image.height(height);
+        }
+    } else {
+        switch (activeAnchor.getName()) {
+            case 'top':
+                top.setX(customWidth / 2);
+                right.setX((-anchorY * ratio) + customWidth);
+                right.setY(customHeight / 2);
+                left.setX(anchorY * ratio);
+                left.setY(customHeight / 2);
+                bottom.setY(customHeight - anchorY);
+                origin.setX(anchorY * ratio);
+                origin.setY(anchorY);
+            break;
+            case 'right':
+                right.setY(customHeight / 2);
+                left.setX(customWidth - anchorX);
+                top.setY(customHeight - (anchorX / ratio));
+                top.setX(customWidth / 2);
+                bottom.setX(customWidth / 2);
+                bottom.setY(anchorX / ratio);
+                origin.setX(customWidth - anchorX);
+                origin.setY(customHeight - (anchorX / ratio));
+            break;
+            case 'bottom':
+                top.setY(customHeight - anchorY);
+                bottom.setX(customWidth/2);
+                right.setY(customHeight / 2);
+                right.setX((-anchorY * ratio) + customWidth);
+                left.setY(customHeight / 2);
+                left.setX(anchorY * ratio);
+                origin.setX(anchorY * ratio);
+                origin.setY(customHeight - anchorY);
+            break;
+            case 'left':
+                left.setY(customHeight / 2);
+                right.setX(-anchorX + customWidth);
+                top.setY(customHeight - (anchorX / ratio));
+                top.setX(customWidth / 2);
+                bottom.setX(customWidth / 2);
+                bottom.setY(anchorX / ratio);
+                origin.setX(anchorX);
+                origin.setY(customHeight - (anchorX / ratio));
+            break;
+        }
+        
+        image.position(origin.position());
+
+        var width = right.getX() - left.getX();
+        var height = bottom.getY() - top.getY();
+        
+        if(width && height) {
+            image.width(width);
+            image.height(height);
+        }
     }
 }
 
-function addAnchor(group, x, y, position) {
+function addAnchor(group, x, y, name) {
     // var stage = group.getStage();
     var layer = group.getLayer();
 
@@ -56,9 +132,9 @@ function addAnchor(group, x, y, position) {
         fill: '#eee',
         strokeWidth: 2,
         radius: 5,
-        name: position,
+        name: name,
         draggable: true,
-        dragOnTop: false
+        dragOnTop: false,
     });
 
     anchor.on('dragmove', function() {
@@ -77,20 +153,53 @@ function addAnchor(group, x, y, position) {
     anchor.on('mouseover', function() {
         var layer = this.getLayer();
         document.body.style.cursor = 'pointer';
-        this.setStrokeWidth(4);
+        this.setStrokeWidth(3);
+        this.stroke('red');
         layer.draw();
     });
     anchor.on('mouseout', function() {
         var layer = this.getLayer();
         document.body.style.cursor = 'default';
         this.setStrokeWidth(2);
+        this.stroke('#333');
         layer.draw();
     });
 
     group.add(anchor);
 }
 
-function drawImage(image) {
+function addLines(group, x, y, point1, point2, name) {
+    // var layer = group.getLayer();
+    var helpLine = new Konva.Line({
+        x: 50,
+        y: 250,
+        points: [300, 150],
+        name: name,
+        stroke: 'red',
+        tension: 1
+    });
+    // layer.Draw();
+    group.add(helpLine);
+}
+
+// Create an invisible help anchor when in 'Fixed Ratio' mode.
+// Position: rightBottom
+function addOrigin(group, x, y, name) {
+    // var stage = group.getStage();
+    // var layer = group.getLayer();
+
+    var anchor = new Konva.Circle({
+        x: x,
+        y: y,
+        radius: 0,
+        name: name,
+        draggable: false,
+        dragOnTop: false,
+    });
+    group.add(anchor);
+}
+
+function drawImage() {
     var stage = new Konva.Stage({
     container: "container",
     width: baseWidth,
@@ -129,20 +238,27 @@ function drawImage(image) {
 
     printImage.on('dragmove', function() {
         update(this);
-        layer.draw();
     });
 
     // Show Images
     layer.add(tShirtImage);
     layer.add(printGroup);
     printGroup.add(printImage);
-    addAnchor(printGroup, 0, 0, 'topLeft');
-    addAnchor(printGroup, customWidth, 0, 'topRight');
-    addAnchor(printGroup, customWidth, customHeight, 'bottomRight');
-    addAnchor(printGroup, 0, customHeight, 'bottomLeft');
+    if(fixedRatio !== true){
+        addAnchor(printGroup, customWidth, customHeight, 'topLeft');
+        addAnchor(printGroup, 0, customHeight, 'topRight');
+        addAnchor(printGroup, 0, 0, 'bottomRight');
+        addAnchor(printGroup, customWidth, 0, 'bottomLeft');
+    } else {
+        addAnchor(printGroup, customWidth / 2, customHeight, 'top');
+        addAnchor(printGroup, 0, customHeight / 2, 'right');
+        addAnchor(printGroup, customWidth / 2, 0, 'bottom');
+        addAnchor(printGroup, customWidth, customHeight / 2, 'left');
+        addOrigin(printGroup, customWidth, customHeight, 'origin');
+        addLines(printGroup, 10, 10, 25, 25, 'topLine');
+    }
     stage.add(layer);
 }
-
 
 // Create images
 var tshirtObj = new Image();
@@ -154,14 +270,15 @@ tshirtObj.onload = function() {
 };
 
 var printObj = new Image();
-printObj.src = 'images/lips.png';
+printObj.src = 'images/print.png';
 printObj.onload = function() {
+    ratio = this.width / this.height
     customHeight = this.height;
-    customWidth = this.width;
+    customWidth = customHeight * ratio;
     if (customWidth > (baseWidth - 50)) {
         var scale = customWidth / (baseWidth - 200);
         customWidth = printObj.width / scale;
-        customHeight = printObj.height /scale;
+        customHeight = printObj.height / scale;
     }
     drawImage(this);
 };
