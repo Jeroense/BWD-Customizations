@@ -26,7 +26,6 @@ function drawImage() {
         image: customObj,
         width: customWidth,
         height: customHeight,
-
         x: (baseWidth - customWidth) / 2,
         y: (baseHeight - customHeight) / 3,
         name: 'customization',
